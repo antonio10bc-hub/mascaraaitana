@@ -121,7 +121,6 @@ const MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto",
 const now=new Date();
 let y=now.getFullYear(),m=now.getMonth(),view="month",first=true;
 let marks=new Set();
-let ref=null,writing=false,pending=false;
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const key=(Y,M,D)=>`${Y}-${pad(M+1)}-${pad(D)}`;
@@ -283,14 +282,36 @@ function toggle(k,b){
   else render();
   save();
 }
-async function save(){
-  if(!ref)return;
-  if(writing){pending=true;return}
+/* Sincronización con la nube (Vercel Blob vía /api/marks). Local = caché; "dirty" = cambios aún sin subir */
+const DIRTY="mascara-luces-dirty";
+let saveT=null,writing=false,again=false;
+const isDirty=()=>{try{return localStorage.getItem(DIRTY)==="1"}catch(e){return false}};
+const setDirty=v=>{try{v?localStorage.setItem(DIRTY,"1"):localStorage.removeItem(DIRTY)}catch(e){}};
+function save(){setDirty(true);clearTimeout(saveT);saveT=setTimeout(push,400)}
+async function push(){
+  if(writing){again=true;return}
   writing=true;
-  try{await ref.set({days:[...marks].sort()});$("status").textContent=""}
-  catch(e){$("status").textContent="No se pudo guardar en la nube. Los cambios siguen en este dispositivo."}
+  try{
+    const r=await fetch("/api/marks",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({days:[...marks]})});
+    if(!r.ok)throw 0;
+    if(!again)setDirty(false);
+    $("status").textContent="";
+  }catch(e){$("status").textContent="Sin conexión: se guarda en este dispositivo y se subirá al volver."}
   writing=false;
-  if(pending){pending=false;save()}
+  if(again){again=false;push()}
+}
+async function pull(){
+  if(isDirty())return push();
+  if(writing)return;
+  try{
+    const r=await fetch("/api/marks",{cache:"no-store"});if(!r.ok)return;
+    const d=(await r.json()).days;
+    if(isDirty()||writing)return;
+    if(Array.isArray(d)){
+      const same=d.length===marks.size&&d.every(k=>marks.has(k));
+      if(!same){marks=new Set(d);try{localStorage.setItem(LS,JSON.stringify(d))}catch(e){}render()}
+    }else if(marks.size)push();
+  }catch(e){}
 }
 $("prev").onclick=()=>step(-1);
 $("next").onclick=()=>step(1);
@@ -308,16 +329,11 @@ document.fonts&&document.fonts.ready.then(()=>moveInd(false));
 addEventListener("resize",()=>moveInd(false));
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("/sw.js").catch(()=>{});
 
-(async()=>{
-  const db=await window.claude?.use?.("db");
-  if(!db)return;
-  ref=db.doc("calendar/marks");
-  ref.onSnapshot(s=>{
-    if(writing||pending)return;
-    if(s.exists){const d=s.data().days;if(Array.isArray(d)){marks=new Set(d);try{localStorage.setItem(LS,JSON.stringify(d))}catch(e){}render()}}
-    else if(marks.size){save()}
-  },()=>{$("status").textContent="Sin conexión con la nube. Se guarda en este dispositivo."});
-})();
+if(location.protocol.startsWith("http")){
+  pull();
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull()});
+  addEventListener("online",pull);
+}
 </script>
 </body>
 </html>

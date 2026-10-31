@@ -39,10 +39,15 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .cal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
 .dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .dow div{text-align:center;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 0 8px;font-weight:500;white-space:nowrap;overflow:hidden}
-.day{aspect-ratio:1;width:100%;min-width:0;border:0;border-radius:8px;background:transparent;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;position:relative;padding:0}
+.day{aspect-ratio:1;width:100%;min-width:0;border:0;border-radius:8px;background:transparent;isolation:isolate;transition:transform .45s cubic-bezier(.34,1.56,.64,1),color .3s ease,background-color .2s ease;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;position:relative;padding:0}
 .day.out{color:var(--muted);opacity:.35}
 .day.today::after{content:"";position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--today)}
-.day.on{background:var(--mark);color:var(--mark-fg)}
+.day::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--mark);z-index:-1;opacity:0;transform:scale(.55);transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .28s ease}
+.day.on{color:var(--mark-fg)}
+.day.on::before{opacity:1;transform:scale(1);transition:transform .5s cubic-bezier(.34,1.56,.64,1),opacity .18s ease}
+.day:active{transform:scale(.9);transition-duration:.12s}
+@media (prefers-reduced-motion:reduce){.day,.day::before,.day.on::before{transition-duration:.01s}}
+.day.today::after{transition:background-color .3s ease}
 .day.on.today::after{background:var(--mark-fg)}
 @media (hover:hover){.btn:hover{border-color:var(--muted)}.day:not(.on):hover{background:var(--line)}.mini:hover{border-color:var(--muted)}}
 .year{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -115,7 +120,7 @@ function renderMonth(){
     b.textContent=d.getDate();
     b.setAttribute("aria-pressed",marks.has(k));
     b.setAttribute("aria-label",`${d.getDate()} de ${MONTHS[d.getMonth()]}`);
-    b.onclick=()=>{toggle(k);b.blur()};
+    b.onclick=()=>{toggle(k,b);b.blur()};
     g.appendChild(b);
   }
 }
@@ -145,10 +150,14 @@ function render(){
   $("cYear").textContent=countIn(`${y}-`);
 }
 function setView(v){view=v;$("vMonth").setAttribute("aria-pressed",v==="month");$("vYear").setAttribute("aria-pressed",v==="year");render()}
-function toggle(k){
+function toggle(k,b){
   marks.has(k)?marks.delete(k):marks.add(k);
   try{localStorage.setItem(LS,JSON.stringify([...marks]))}catch(e){}
-  render();save();
+  if(b){const on=marks.has(k);b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);
+    $("cMonth").textContent=countIn(`${y}-${pad(m+1)}-`);$("cYear").textContent=countIn(`${y}-`);
+    try{navigator.vibrate&&navigator.vibrate(on?10:6)}catch(e){}}
+  else render();
+  save();
 }
 async function save(){
   if(!ref)return;

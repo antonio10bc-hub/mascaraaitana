@@ -1,0 +1,177 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Calendario Máscara Luces</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: columna centrada; saludo, cabecera fija en una línea, vista Mes (7×6) o Año (12 mini meses) */
+:root{
+  --bg:#f6f7f9;--surface:#ffffff;--fg:#14171c;--muted:#6b7280;--line:#e3e6eb;
+  --mark:#d93a2b;--mark-fg:#ffffff;--today:#14171c;
+  --sans:"Geist",ui-sans-serif,system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--surface:#171a20;--fg:#e8eaee;--muted:#8a919c;--line:#262a32;
+  --mark:#e5483a;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--surface:#171a20;--fg:#e8eaee;--muted:#8a919c;--line:#262a32;
+  --mark:#e5483a;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.hello{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;white-space:nowrap}
+header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px}
+h1{margin:4px 0 0;font-size:clamp(20px,6vw,28px);font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h1 span{color:var(--muted);font-weight:400}
+.nav{display:flex;gap:6px}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;height:36px;min-width:36px;padding:0 10px;font-size:13px;font-weight:500;white-space:nowrap}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;align-self:flex-start}
+.seg button{border:0;background:transparent;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+button:focus{outline:none}
+button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.cal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow div{text-align:center;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 0 8px;font-weight:500;white-space:nowrap;overflow:hidden}
+.day{aspect-ratio:1;width:100%;min-width:0;border:0;border-radius:8px;background:transparent;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;position:relative;padding:0}
+.day.out{color:var(--muted);opacity:.35}
+.day.today::after{content:"";position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--today)}
+.day.on{background:var(--mark);color:var(--mark-fg)}
+.day.on.today::after{background:var(--mark-fg)}
+@media (hover:hover){.btn:hover{border-color:var(--muted)}.day:not(.on):hover{background:var(--line)}.mini:hover{border-color:var(--muted)}}
+.year{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:480px){.year{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mini.cur{border-color:var(--fg)}
+.mini h3{margin:0;font-size:12px;font-weight:600;display:flex;justify-content:space-between;white-space:nowrap}
+.mini h3 em{font-style:normal;font-family:var(--mono);font-weight:500;color:var(--mark)}
+.mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.mgrid i{aspect-ratio:1;border-radius:3px;font-style:normal;font-family:var(--mono);font-size:9px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-variant-numeric:tabular-nums}
+.mgrid i.on{background:var(--mark);color:var(--mark-fg)}
+.mgrid i.today{outline:1px solid var(--fg);color:var(--fg)}
+.stats{display:flex;gap:24px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.stats b{font-family:var(--mono);font-weight:500;color:var(--fg);font-size:15px;margin-right:4px}
+.status{font-size:12px;color:var(--muted);min-height:1em}
+</style>
+
+<div class="wrap">
+  <p class="hello">Hola Aitana :)</p>
+  <div class="seg" role="group" aria-label="Vista">
+    <button id="vMonth" aria-pressed="true">Mes</button>
+    <button id="vYear" aria-pressed="false">Año</button>
+  </div>
+  <header>
+    <div style="min-width:0">
+      <div class="eyebrow">Seguimiento · Máscara luces</div>
+      <h1 id="title"></h1>
+    </div>
+    <div class="nav">
+      <button class="btn" id="prev" aria-label="Anterior">‹</button>
+      <button class="btn" id="todayBtn">Hoy</button>
+      <button class="btn" id="next" aria-label="Siguiente">›</button>
+    </div>
+  </header>
+  <div class="cal" id="monthView">
+    <div class="dow"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div class="year" id="yearView" hidden></div>
+  <div class="stats">
+    <div id="sMonth"><b id="cMonth">0</b>días este mes</div>
+    <div><b id="cYear">0</b>días en el año</div>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+const MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const now=new Date();
+let y=now.getFullYear(),m=now.getMonth(),view="month";
+let marks=new Set();
+let ref=null,writing=false,pending=false;
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+const key=(Y,M,D)=>`${Y}-${pad(M+1)}-${pad(D)}`;
+const todayKey=key(now.getFullYear(),now.getMonth(),now.getDate());
+const LS="mascara-luces-marks";
+try{const s=JSON.parse(localStorage.getItem(LS)||"[]");if(Array.isArray(s))marks=new Set(s)}catch(e){}
+
+function countIn(prefix){let c=0;marks.forEach(k=>{if(k.startsWith(prefix))c++});return c}
+
+function renderMonth(){
+  const g=$("grid");g.innerHTML="";
+  const first=(new Date(y,m,1).getDay()+6)%7;
+  for(let i=0;i<42;i++){
+    const d=new Date(y,m,1-first+i);
+    const k=key(d.getFullYear(),d.getMonth(),d.getDate());
+    const b=document.createElement("button");
+    b.className="day"+(d.getMonth()!==m?" out":"")+(k===todayKey?" today":"")+(marks.has(k)?" on":"");
+    b.textContent=d.getDate();
+    b.setAttribute("aria-pressed",marks.has(k));
+    b.setAttribute("aria-label",`${d.getDate()} de ${MONTHS[d.getMonth()]}`);
+    b.onclick=()=>{toggle(k);b.blur()};
+    g.appendChild(b);
+  }
+}
+function renderYear(){
+  const yv=$("yearView");yv.innerHTML="";
+  for(let mm=0;mm<12;mm++){
+    const card=document.createElement("button");
+    card.className="mini"+(y===now.getFullYear()&&mm===now.getMonth()?" cur":"");
+    const c=countIn(`${y}-${pad(mm+1)}-`);
+    let cells="";
+    const first=(new Date(y,mm,1).getDay()+6)%7, dim=new Date(y,mm+1,0).getDate();
+    for(let i=0;i<first;i++)cells+="<i></i>";
+    for(let d=1;d<=dim;d++){const k=key(y,mm,d);cells+=`<i class="${marks.has(k)?"on":""}${k===todayKey?" today":""}">${d}</i>`}
+    card.innerHTML=`<h3>${MONTHS[mm]}<em>${c||""}</em></h3><div class="mgrid">${cells}</div>`;
+    card.setAttribute("aria-label",`Abrir ${MONTHS[mm]}`);
+    card.onclick=()=>{m=mm;setView("month")};
+    yv.appendChild(card);
+  }
+}
+function render(){
+  $("title").innerHTML=view==="month"?`${MONTHS[m]} <span>${y}</span>`:`${y}`;
+  $("monthView").hidden=view!=="month";
+  $("yearView").hidden=view!=="year";
+  $("sMonth").hidden=view!=="month";
+  view==="month"?renderMonth():renderYear();
+  $("cMonth").textContent=countIn(`${y}-${pad(m+1)}-`);
+  $("cYear").textContent=countIn(`${y}-`);
+}
+function setView(v){view=v;$("vMonth").setAttribute("aria-pressed",v==="month");$("vYear").setAttribute("aria-pressed",v==="year");render()}
+function toggle(k){
+  marks.has(k)?marks.delete(k):marks.add(k);
+  try{localStorage.setItem(LS,JSON.stringify([...marks]))}catch(e){}
+  render();save();
+}
+async function save(){
+  if(!ref)return;
+  if(writing){pending=true;return}
+  writing=true;
+  try{await ref.set({days:[...marks].sort()});$("status").textContent=""}
+  catch(e){$("status").textContent="No se pudo guardar en la nube. Los cambios siguen en este dispositivo."}
+  writing=false;
+  if(pending){pending=false;save()}
+}
+$("prev").onclick=()=>{if(view==="year")y--;else{m--;if(m<0){m=11;y--}}render()};
+$("next").onclick=()=>{if(view==="year")y++;else{m++;if(m>11){m=0;y++}}render()};
+$("todayBtn").onclick=()=>{y=now.getFullYear();m=now.getMonth();render()};
+$("vMonth").onclick=()=>setView("month");
+$("vYear").onclick=()=>setView("year");
+render();
+
+(async()=>{
+  const db=await window.claude?.use?.("db");
+  if(!db)return;
+  ref=db.doc("calendar/marks");
+  ref.onSnapshot(s=>{
+    if(writing||pending)return;
+    if(s.exists){const d=s.data().days;if(Array.isArray(d)){marks=new Set(d);try{localStorage.setItem(LS,JSON.stringify(d))}catch(e){}render()}}
+    else if(marks.size){save()}
+  },()=>{$("status").textContent="Sin conexión con la nube. Se guarda en este dispositivo."});
+})();
+</script>
+
+</body></html>

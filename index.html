@@ -1,18 +1,31 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Calendario Máscara Luces</title>
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Máscara">
-<meta name="theme-color" content="#d93a2b">
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
+[hidden]:not([hidden=until-found i]){display:none!important}
 /* Layout: columna centrada; saludo, cabecera fija en una línea, vista Mes (7×6) o Año (12 mini meses) */
 :root{
   --bg:#f6f7f9;--surface:#ffffff;--fg:#14171c;--muted:#6b7280;--line:#e3e6eb;
   --mark:#d93a2b;--mark-fg:#ffffff;--today:#14171c;
   --sans:"Geist",ui-sans-serif,system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1115;--surface:#171a20;--fg:#e8eaee;--muted:#8a919c;--line:#262a32;
@@ -20,8 +33,9 @@
 :root[data-theme="dark"]{
   --bg:#0f1115;--surface:#171a20;--fg:#e8eaee;--muted:#8a919c;--line:#262a32;
   --mark:#e5483a;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}
-html,body{background:var(--bg);color:var(--fg)}
-body{font-family:var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px}
+html,body{background:var(--bg);color:var(--fg);overscroll-behavior:none;-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .hello{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0}
 .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;white-space:nowrap}
@@ -29,31 +43,36 @@ header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap
 h1{margin:4px 0 0;font-size:clamp(20px,6vw,28px);font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 h1 span{color:var(--muted);font-weight:400}
 .nav{display:flex;gap:6px}
-button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;height:36px;min-width:36px;padding:0 10px;font-size:13px;font-weight:500;white-space:nowrap}
-.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;align-self:flex-start}
-.seg button{border:0;background:transparent;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:500;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;height:36px;min-width:36px;padding:0 10px;font-size:13px;font-weight:500;white-space:nowrap;transition:transform .4s var(--spring),border-color .2s ease}
+.btn:active{transform:scale(.92);transition-duration:.1s}
+.seg{position:relative;display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;align-self:flex-start}
+.seg .ind{position:absolute;top:3px;bottom:3px;left:0;border-radius:6px;background:var(--fg);transition:transform .42s cubic-bezier(.3,1.2,.5,1),width .42s cubic-bezier(.3,1.2,.5,1)}
+.seg button{position:relative;z-index:1;border:0;background:transparent;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:500;color:var(--muted);transition:color .3s ease}
+.seg button[aria-pressed="true"]{color:var(--bg)}
 button:focus{outline:none}
 button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .cal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.vp{position:relative;touch-action:pan-y}
+.vp.swapping{overflow:hidden;margin:-6px;padding:6px}
+.leaving{position:absolute;top:6px;left:6px;right:6px;pointer-events:none}
 .dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .dow div{text-align:center;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 0 8px;font-weight:500;white-space:nowrap;overflow:hidden}
-.day{aspect-ratio:1;width:100%;min-width:0;border:0;border-radius:8px;background:transparent;isolation:isolate;transition:transform .45s cubic-bezier(.34,1.56,.64,1),color .3s ease,background-color .2s ease;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;position:relative;padding:0}
+.day{aspect-ratio:1;width:100%;min-width:0;border:0;border-radius:8px;background:transparent;isolation:isolate;transition:transform .45s var(--spring),color .3s ease,background-color .2s ease;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;position:relative;padding:0}
 .day.out{color:var(--muted);opacity:.35}
-.day.today::after{content:"";position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--today)}
+.day.today::after{content:"";position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--today);transition:background-color .3s ease}
 .day::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--mark);z-index:-1;opacity:0;transform:scale(.55);transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .28s ease}
 .day.on{color:var(--mark-fg)}
-.day.on::before{opacity:1;transform:scale(1);transition:transform .5s cubic-bezier(.34,1.56,.64,1),opacity .18s ease}
+.day.on::before{opacity:1;transform:scale(1);transition:transform .5s var(--spring),opacity .18s ease}
 .day:active{transform:scale(.9);transition-duration:.12s}
-@media (prefers-reduced-motion:reduce){.day,.day::before,.day.on::before{transition-duration:.01s}}
-.day.today::after{transition:background-color .3s ease}
 .day.on.today::after{background:var(--mark-fg)}
 @media (hover:hover){.btn:hover{border-color:var(--muted)}.day:not(.on):hover{background:var(--line)}.mini:hover{border-color:var(--muted)}}
 .year{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (min-width:480px){.year{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.mini{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mini{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:6px;min-width:0;transition:transform .45s var(--spring),border-color .2s ease}
+.mini:active{transform:scale(.96);transition-duration:.12s}
 .mini.cur{border-color:var(--fg)}
+.mini.lift{z-index:2}
 .mini h3{margin:0;font-size:12px;font-weight:600;display:flex;justify-content:space-between;white-space:nowrap}
 .mini h3 em{font-style:normal;font-family:var(--mono);font-weight:500;color:var(--mark)}
 .mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
@@ -61,13 +80,16 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .mgrid i.on{background:var(--mark);color:var(--mark-fg)}
 .mgrid i.today{outline:1px solid var(--fg);color:var(--fg)}
 .stats{display:flex;gap:24px;font-size:13px;color:var(--muted);flex-wrap:wrap}
-.stats b{font-family:var(--mono);font-weight:500;color:var(--fg);font-size:15px;margin-right:4px}
+.stats b{display:inline-block;font-family:var(--mono);font-weight:500;color:var(--fg);font-size:15px;margin-right:4px}
 .status{font-size:12px;color:var(--muted);min-height:1em}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01s!important}}
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <p class="hello">Hola Aitana :)</p>
   <div class="seg" role="group" aria-label="Vista">
+    <span class="ind" id="ind" aria-hidden="true"></span>
     <button id="vMonth" aria-pressed="true">Mes</button>
     <button id="vYear" aria-pressed="false">Año</button>
   </div>
@@ -84,9 +106,9 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
   </header>
   <div class="cal" id="monthView">
     <div class="dow"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
-    <div class="grid" id="grid"></div>
+    <div class="vp" id="mvp"></div>
   </div>
-  <div class="year" id="yearView" hidden></div>
+  <div class="vp" id="yearView" hidden></div>
   <div class="stats">
     <div id="sMonth"><b id="cMonth">0</b>días este mes</div>
     <div><b id="cYear">0</b>días en el año</div>
@@ -97,7 +119,7 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 <script>
 const MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const now=new Date();
-let y=now.getFullYear(),m=now.getMonth(),view="month";
+let y=now.getFullYear(),m=now.getMonth(),view="month",first=true;
 let marks=new Set();
 let ref=null,writing=false,pending=false;
 const $=id=>document.getElementById(id);
@@ -105,15 +127,18 @@ const pad=n=>String(n).padStart(2,"0");
 const key=(Y,M,D)=>`${Y}-${pad(M+1)}-${pad(D)}`;
 const todayKey=key(now.getFullYear(),now.getMonth(),now.getDate());
 const LS="mascara-luces-marks";
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const EASE="cubic-bezier(.2,.8,.2,1)";
 try{const s=JSON.parse(localStorage.getItem(LS)||"[]");if(Array.isArray(s))marks=new Set(s)}catch(e){}
 
 function countIn(prefix){let c=0;marks.forEach(k=>{if(k.startsWith(prefix))c++});return c}
+const curVp=()=>view==="month"?$("mvp"):$("yearView");
 
-function renderMonth(){
-  const g=$("grid");g.innerHTML="";
-  const first=(new Date(y,m,1).getDay()+6)%7;
+function buildMonth(){
+  const g=document.createElement("div");g.className="grid";
+  const first0=(new Date(y,m,1).getDay()+6)%7;
   for(let i=0;i<42;i++){
-    const d=new Date(y,m,1-first+i);
+    const d=new Date(y,m,1-first0+i);
     const k=key(d.getFullYear(),d.getMonth(),d.getDate());
     const b=document.createElement("button");
     b.className="day"+(d.getMonth()!==m?" out":"")+(k===todayKey?" today":"")+(marks.has(k)?" on":"");
@@ -121,40 +146,139 @@ function renderMonth(){
     b.setAttribute("aria-pressed",marks.has(k));
     b.setAttribute("aria-label",`${d.getDate()} de ${MONTHS[d.getMonth()]}`);
     b.onclick=()=>{toggle(k,b);b.blur()};
+    if(first&&!reduce)b.animate([{opacity:0,transform:"translateY(6px) scale(.94)"},{opacity:1,transform:"none"}],{duration:420,delay:i*7,easing:EASE,fill:"backwards"});
     g.appendChild(b);
   }
+  return g;
 }
-function renderYear(){
-  const yv=$("yearView");yv.innerHTML="";
+function buildYear(){
+  const yv=document.createElement("div");yv.className="year";
   for(let mm=0;mm<12;mm++){
     const card=document.createElement("button");
     card.className="mini"+(y===now.getFullYear()&&mm===now.getMonth()?" cur":"");
     const c=countIn(`${y}-${pad(mm+1)}-`);
     let cells="";
-    const first=(new Date(y,mm,1).getDay()+6)%7, dim=new Date(y,mm+1,0).getDate();
-    for(let i=0;i<first;i++)cells+="<i></i>";
+    const f=(new Date(y,mm,1).getDay()+6)%7, dim=new Date(y,mm+1,0).getDate();
+    for(let i=0;i<f;i++)cells+="<i></i>";
     for(let d=1;d<=dim;d++){const k=key(y,mm,d);cells+=`<i class="${marks.has(k)?"on":""}${k===todayKey?" today":""}">${d}</i>`}
     card.innerHTML=`<h3>${MONTHS[mm]}<em>${c||""}</em></h3><div class="mgrid">${cells}</div>`;
     card.setAttribute("aria-label",`Abrir ${MONTHS[mm]}`);
-    card.onclick=()=>{m=mm;setView("month")};
+    card.onclick=()=>{const r=card.getBoundingClientRect();m=mm;setView("month",r)};
     yv.appendChild(card);
   }
+  return yv;
 }
+const build=()=>view==="month"?buildMonth():buildYear();
+
+function setTitle(dir){
+  const t=$("title");t.innerHTML=view==="month"?`${MONTHS[m]} <span>${y}</span>`:`${y}`;
+  if(dir&&!reduce)t.animate([{opacity:0,transform:`translateX(${dir*14}px)`},{opacity:1,transform:"none"}],{duration:380,easing:EASE});
+}
+function setCount(el,v,anim){
+  const old=+el.textContent;
+  if(old===v)return;
+  el.getAnimations().forEach(a=>a.cancel());
+  if(!anim||reduce){el.textContent=v;return}
+  const d=v>old?1:-1;
+  el.animate([{transform:"none",opacity:1},{transform:`translateY(${-d*60}%)`,opacity:0}],{duration:130,easing:"ease-in"})
+    .onfinish=()=>{el.textContent=v;el.animate([{transform:`translateY(${d*60}%)`,opacity:0},{transform:"none",opacity:1}],{duration:320,easing:"cubic-bezier(.2,.9,.3,1.25)"})};
+}
+function counts(anim){setCount($("cMonth"),countIn(`${y}-${pad(m+1)}-`),anim);setCount($("cYear"),countIn(`${y}-`),anim)}
+
 function render(){
-  $("title").innerHTML=view==="month"?`${MONTHS[m]} <span>${y}</span>`:`${y}`;
+  setTitle(0);
   $("monthView").hidden=view!=="month";
   $("yearView").hidden=view!=="year";
   $("sMonth").hidden=view!=="month";
-  view==="month"?renderMonth():renderYear();
-  $("cMonth").textContent=countIn(`${y}-${pad(m+1)}-`);
-  $("cYear").textContent=countIn(`${y}-`);
+  const vp=curVp();vp.classList.remove("swapping");vp.replaceChildren(build());
+  counts(false);
 }
-function setView(v){view=v;$("vMonth").setAttribute("aria-pressed",v==="month");$("vYear").setAttribute("aria-pressed",v==="year");render()}
+
+/* Cambio de mes/año con deslizamiento */
+function goTo(ny,nm,dir,dx=0){
+  y=ny;m=nm;
+  const vp=curVp();
+  vp.querySelectorAll(".leaving").forEach(e=>e.remove());
+  const old=vp.firstElementChild,neu=build();
+  setTitle(dir);counts(true);
+  if(reduce||!old){vp.replaceChildren(neu);return}
+  const op=+(old.style.opacity||1);old.style.transform=old.style.opacity="";
+  old.classList.add("leaving");vp.classList.add("swapping");vp.appendChild(neu);
+  const w=vp.offsetWidth;
+  old.animate([{transform:`translateX(${dx}px)`,opacity:op},{transform:`translateX(${-dir*w*.55}px)`,opacity:0}],{duration:320,easing:EASE,fill:"forwards"}).onfinish=()=>old.remove();
+  neu.animate([{transform:`translateX(${dir*w*.45}px)`,opacity:0},{transform:"none",opacity:1}],{duration:440,easing:EASE})
+    .onfinish=()=>{if(!vp.querySelector(".leaving"))vp.classList.remove("swapping")};
+}
+function step(dir,dx){
+  if(view==="year")return goTo(y+dir,m,dir,dx);
+  let ny=y,nm=m+dir;if(nm<0){nm=11;ny--}if(nm>11){nm=0;ny++}
+  goTo(ny,nm,dir,dx);
+}
+function swipe(el){
+  let sx,sy,st,dx=0,pid=null,drag=false,blockUntil=0;
+  const g=()=>el.matches(".vp")?el.firstElementChild:$("mvp").firstElementChild;
+  el.addEventListener("pointerdown",e=>{if(e.button)return;pid=e.pointerId;sx=e.clientX;sy=e.clientY;st=e.timeStamp;dx=0;drag=false});
+  el.addEventListener("pointermove",e=>{
+    if(e.pointerId!==pid)return;
+    const ddx=e.clientX-sx,ddy=e.clientY-sy;
+    if(!drag){
+      if(Math.abs(ddx)>8&&Math.abs(ddx)>Math.abs(ddy)*1.2){drag=true;try{el.setPointerCapture(pid)}catch(_){}(el.matches(".vp")?el:$("mvp")).classList.add("swapping")}
+      else if(Math.abs(ddy)>10)pid=null;
+      return;
+    }
+    dx=ddx;const w=el.offsetWidth,n=g();if(!n)return;
+    n.style.transform=`translateX(${dx}px)`;n.style.opacity=1-Math.min(Math.abs(dx)/w,1)*.6;
+  });
+  const end=e=>{
+    if(e.pointerId!==pid)return;pid=null;
+    if(!drag)return;drag=false;blockUntil=performance.now()+400;
+    const w=el.offsetWidth,v=Math.abs(dx)/(e.timeStamp-st||1);
+    if(e.type!=="pointercancel"&&(Math.abs(dx)>w*.22||(v>.45&&Math.abs(dx)>30)))return step(dx<0?1:-1,dx);
+    const n=g();if(!n)return;const op=+(n.style.opacity||1);n.style.transform=n.style.opacity="";
+    n.animate([{transform:`translateX(${dx}px)`,opacity:op},{transform:"none",opacity:1}],{duration:420,easing:"cubic-bezier(.3,1.3,.5,1)"})
+      .onfinish=()=>(el.matches(".vp")?el:$("mvp")).classList.remove("swapping");
+  };
+  el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end);
+  el.addEventListener("click",e=>{if(performance.now()<blockUntil){e.stopPropagation();e.preventDefault()}},true);
+}
+
+/* Cambio Mes ↔ Año con zoom */
+function flip(el,from,to,dur=480){
+  el.animate([{transformOrigin:"0 0",transform:`translate(${from.left-to.left}px,${from.top-to.top}px) scale(${from.width/to.width},${from.height/to.height})`},
+              {transformOrigin:"0 0",transform:"none"}],{duration:dur,easing:"cubic-bezier(.2,.85,.25,1)"});
+}
+function moveInd(anim){
+  const b=view==="month"?$("vMonth"):$("vYear"),ind=$("ind");
+  if(!anim)ind.style.transition="none";
+  ind.style.width=b.offsetWidth+"px";ind.style.transform=`translateX(${b.offsetLeft}px)`;
+  if(!anim){ind.offsetWidth;ind.style.transition=""}
+}
+function setView(v,fromRect){
+  if(v===view)return;
+  const calRect=view==="month"?$("monthView").getBoundingClientRect():null;
+  view=v;
+  $("vMonth").setAttribute("aria-pressed",v==="month");$("vYear").setAttribute("aria-pressed",v==="year");
+  moveInd(true);render();
+  if(reduce)return;
+  const fade=(els,delay)=>els.forEach(e=>e.animate([{opacity:0},{opacity:1}],{duration:280,delay,easing:"ease-out",fill:"backwards"}));
+  if(v==="month"){
+    const cal=$("monthView");
+    if(fromRect)flip(cal,fromRect,cal.getBoundingClientRect());
+    else cal.animate([{opacity:0,transform:"scale(.97)"},{opacity:1,transform:"none"}],{duration:360,easing:EASE});
+    fade([...cal.children],fromRect?120:0);
+  }else{
+    const cards=[...$("yearView").querySelectorAll(".mini")],t=cards[m];
+    cards.forEach((c,i)=>{if(c!==t)c.animate([{opacity:0,transform:"scale(.9)"},{opacity:1,transform:"none"}],{duration:380,delay:80+Math.abs(i-m)*22,easing:EASE,fill:"backwards"})});
+    t.classList.add("lift");flip(t,calRect,t.getBoundingClientRect());
+    fade([...t.children],140);
+    setTimeout(()=>t.classList.remove("lift"),500);
+  }
+}
+
 function toggle(k,b){
   marks.has(k)?marks.delete(k):marks.add(k);
   try{localStorage.setItem(LS,JSON.stringify([...marks]))}catch(e){}
-  if(b){const on=marks.has(k);b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);
-    $("cMonth").textContent=countIn(`${y}-${pad(m+1)}-`);$("cYear").textContent=countIn(`${y}-`);
+  if(b){const on=marks.has(k);b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);counts(true);
     try{navigator.vibrate&&navigator.vibrate(on?10:6)}catch(e){}}
   else render();
   save();
@@ -168,12 +292,21 @@ async function save(){
   writing=false;
   if(pending){pending=false;save()}
 }
-$("prev").onclick=()=>{if(view==="year")y--;else{m--;if(m<0){m=11;y--}}render()};
-$("next").onclick=()=>{if(view==="year")y++;else{m++;if(m>11){m=0;y++}}render()};
-$("todayBtn").onclick=()=>{y=now.getFullYear();m=now.getMonth();render()};
+$("prev").onclick=()=>step(-1);
+$("next").onclick=()=>step(1);
+$("todayBtn").onclick=()=>{
+  const ny=now.getFullYear(),nm=now.getMonth();
+  const d=view==="year"?Math.sign(ny-y):Math.sign((ny*12+nm)-(y*12+m));
+  if(d)goTo(ny,nm,d);else if(view==="year"&&m!==nm)m=nm;
+};
 $("vMonth").onclick=()=>setView("month");
 $("vYear").onclick=()=>setView("year");
-render();
+swipe($("monthView"));swipe($("yearView"));
+render();first=false;
+moveInd(false);
+document.fonts&&document.fonts.ready.then(()=>moveInd(false));
+addEventListener("resize",()=>moveInd(false));
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("/sw.js").catch(()=>{});
 
 (async()=>{
   const db=await window.claude?.use?.("db");
@@ -186,5 +319,5 @@ render();
   },()=>{$("status").textContent="Sin conexión con la nube. Se guarda en este dispositivo."});
 })();
 </script>
-
-</body></html>
+</body>
+</html>

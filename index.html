@@ -23,16 +23,16 @@ body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
 /* Layout: columna centrada; saludo, cabecera fija en una línea, vista Mes (7×6) o Año (12 mini meses) */
 :root{
   --bg:#f6f7f9;--surface:#ffffff;--fg:#14171c;--muted:#6b7280;--line:#e3e6eb;
-  --mark:#d93a2b;--mark-fg:#ffffff;--today:#14171c;
+  --mark:#d9705b;--mark-fg:#ffffff;--today:#14171c;
   --sans:"Geist",ui-sans-serif,system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
   --ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1115;--surface:#171a20;--fg:#e8eaee;--muted:#8a919c;--line:#262a32;
-  --mark:#e5483a;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}}
+  --mark:#e27e69;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1115;--surface:#171a20;--fg:#e8eaee;--muted:#8a919c;--line:#262a32;
-  --mark:#e5483a;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}
+  --mark:#e27e69;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}
 html,body{background:var(--bg);color:var(--fg);overscroll-behavior:none;-webkit-text-size-adjust:100%}
 body{font-family:var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
@@ -287,7 +287,7 @@ const DIRTY="mascara-luces-dirty";
 let saveT=null,writing=false,again=false;
 const isDirty=()=>{try{return localStorage.getItem(DIRTY)==="1"}catch(e){return false}};
 const setDirty=v=>{try{v?localStorage.setItem(DIRTY,"1"):localStorage.removeItem(DIRTY)}catch(e){}};
-function save(){setDirty(true);clearTimeout(saveT);saveT=setTimeout(push,400)}
+function save(){setDirty(true);if(!location.protocol.startsWith("http"))return;clearTimeout(saveT);saveT=setTimeout(push,400)}
 async function push(){
   if(writing){again=true;return}
   writing=true;

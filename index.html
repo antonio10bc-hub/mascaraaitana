@@ -82,6 +82,14 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .stats{display:flex;gap:24px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .stats b{display:inline-block;font-family:var(--mono);font-weight:500;color:var(--fg);font-size:15px;margin-right:4px}
 .status{font-size:12px;color:var(--muted);min-height:1em}
+.remind{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;transition:transform .45s var(--spring),border-color .2s ease}
+.remind:active{transform:scale(.98);transition-duration:.12s}
+.remind span{display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:500}
+.remind small{font-size:12px;font-weight:400;color:var(--muted)}
+.sw{flex:none;width:40px;height:24px;border-radius:12px;background:var(--line);position:relative;transition:background-color .3s ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .4s var(--spring)}
+.remind[aria-checked="true"] .sw{background:var(--mark)}
+.remind[aria-checked="true"] .sw::after{transform:translateX(16px)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01s!important}}
 </style>
 </head>
@@ -112,6 +120,10 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
     <div id="sMonth"><b id="cMonth">0</b>días este mes</div>
     <div><b id="cYear">0</b>días en el año</div>
   </div>
+  <button class="remind" id="remind" role="switch" aria-checked="false" hidden>
+    <span>Recordatorio diario<small id="remindTxt">Cada noche a las 21:00 · Sí / No</small></span>
+    <i class="sw" aria-hidden="true"></i>
+  </button>
   <div class="status" id="status"></div>
 </div>
 
@@ -328,7 +340,38 @@ document.fonts&&document.fonts.ready.then(()=>moveInd(false));
 addEventListener("resize",()=>moveInd(false));
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("/sw.js").catch(()=>{});
 
+/* Recordatorio push */
+const b64=s=>{const p="=".repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(b,c=>c.charCodeAt(0))};
+async function initRemind(){
+  if(!("serviceWorker" in navigator)||!("PushManager" in window)||location.protocol!=="https:")return;
+  const btn=$("remind"),reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  const show=on=>btn.setAttribute("aria-checked",on);
+  show(!!sub&&Notification.permission==="granted");btn.hidden=false;
+  if(sub)fetch("/api/subscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(sub)}).catch(()=>{});
+  btn.onclick=async()=>{
+    try{
+      if(btn.getAttribute("aria-checked")==="true"){
+        show(false);
+        if(sub){fetch("/api/subscribe",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:sub.endpoint})}).catch(()=>{});await sub.unsubscribe();sub=null}
+        return;
+      }
+      show(true);
+      if(await Notification.requestPermission()!=="granted"){show(false);$("status").textContent="Las notificaciones están bloqueadas en los ajustes del móvil.";return}
+      const {publicKey}=await (await fetch("/api/vapid",{cache:"no-store"})).json();
+      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(publicKey)});
+      const r=await fetch("/api/subscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(sub)});
+      if(!r.ok)throw 0;
+      $("status").textContent="";
+    }catch(e){show(false);$("status").textContent="No se pudo activar el recordatorio. Inténtalo de nuevo."}
+  };
+}
+if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("message",e=>{
+  if(e.data&&e.data.type==="marked"&&!marks.has(e.data.day)){marks.add(e.data.day);try{localStorage.setItem(LS,JSON.stringify([...marks]))}catch(_){}render()}
+});
+
 if(location.protocol.startsWith("http")){
+  initRemind();
   pull();
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull()});
   addEventListener("online",pull);

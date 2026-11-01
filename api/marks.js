@@ -1,26 +1,28 @@
-import { get, put } from "@vercel/blob";
-
-const PATH = "marks.json";
-const noStore = { "content-type": "application/json", "cache-control": "no-store" };
-const isDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+import { json, readJSON, writeJSON, isDay } from "./_store.js";
 
 export async function GET() {
-  const r = await get(PATH, { access: "private", useCache: false });
-  if (!r || r.statusCode !== 200) return new Response(JSON.stringify({ days: null }), { headers: noStore });
-  const text = await new Response(r.stream).text();
-  return new Response(text, { headers: noStore });
+  const data = await readJSON("marks.json", null);
+  return json({ days: data ? data.days : null });
 }
 
 export async function PUT(request) {
   let body;
-  try { body = await request.json(); } catch { return new Response("JSON inválido", { status: 400 }); }
+  try { body = await request.json(); } catch { return json({ error: "JSON inválido" }, 400); }
   const days = body && body.days;
-  if (!Array.isArray(days) || days.length > 10000 || !days.every(isDay))
-    return new Response("Datos inválidos", { status: 400 });
+  if (!Array.isArray(days) || days.length > 10000 || !days.every(isDay)) return json({ error: "Datos inválidos" }, 400);
   const clean = [...new Set(days)].sort();
-  await put(PATH, JSON.stringify({ days: clean, updatedAt: Date.now() }), {
-    access: "private", addRandomSuffix: false, allowOverwrite: true,
-    contentType: "application/json", cacheControlMaxAge: 60,
-  });
-  return new Response(JSON.stringify({ ok: true, count: clean.length }), { headers: noStore });
+  await writeJSON("marks.json", { days: clean, updatedAt: Date.now() });
+  return json({ ok: true, count: clean.length });
+}
+
+// Añade un solo día (lo usa el botón "Sí" de la notificación)
+export async function POST(request) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "JSON inválido" }, 400); }
+  if (!isDay(body && body.day)) return json({ error: "Día inválido" }, 400);
+  const data = await readJSON("marks.json", { days: [] });
+  const days = new Set(data.days || []);
+  days.add(body.day);
+  await writeJSON("marks.json", { days: [...days].sort(), updatedAt: Date.now() });
+  return json({ ok: true });
 }

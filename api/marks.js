@@ -21,8 +21,16 @@ export async function POST(request) {
   try { body = await request.json(); } catch { return json({ error: "JSON inválido" }, 400); }
   if (!isDay(body && body.day)) return json({ error: "Día inválido" }, 400);
   const data = await readJSON("marks.json", { days: [] });
-  const days = data.days || [];
-  if (!days.some(d => d.split(":")[0] === body.day)) days.push(body.day); // si ya tiene nivel, se respeta
+  // "Sí" = máscara hecha: vacío -> máscara; retinol/glicólico solos -> combinados; el resto se respeta
+  const up = { r: "mr", g: "mg" };
+  let found = false;
+  const days = (data.days || []).map(d => {
+    const [k, t] = d.split(":");
+    if (k !== body.day) return d;
+    found = true;
+    return up[t] ? `${k}:${up[t]}` : d;
+  });
+  if (!found) days.push(body.day);
   await writeJSON("marks.json", { days: days.sort(), updatedAt: Date.now() });
   return json({ ok: true });
 }

@@ -61,17 +61,11 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .day{aspect-ratio:1;width:100%;min-width:0;border:0;border-radius:8px;background:transparent;isolation:isolate;transition:transform .45s var(--spring),color .3s ease,background-color .2s ease;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;position:relative;padding:0}
 .day.out{color:var(--muted);opacity:.35}
 .day.today::after{content:"";position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--today);transition:background-color .3s ease}
-.day::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--mark);z-index:-1;opacity:0;transform:scale(.55);transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .28s ease}
+.day::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--fill,var(--mark));z-index:-1;opacity:0;transform:scale(.55);transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .28s ease}
 .day.on{color:var(--mark-fg)}
 .day.on::before{opacity:1;transform:scale(1);transition:transform .5s var(--spring),opacity .18s ease}
 .day:active{transform:scale(.9);transition-duration:.12s}
 .day.on.today::after{background:var(--mark-fg)}
-.day .lv{position:absolute;inset:50%;border-radius:5px;z-index:-1;opacity:0;transition:inset .5s var(--spring),opacity .2s ease}
-.day .lv.b{background:var(--ret)}
-.day .lv.g{background:var(--gly);border-radius:3px}
-.day.l2 .lv.b{inset:25%;opacity:1}
-.day.l3 .lv.b{inset:16.67%;opacity:1}
-.day.l3 .lv.g{inset:33.33%;opacity:1}
 @media (hover:hover){.btn:hover{border-color:var(--muted)}.day:not(.on):hover{background:var(--line)}.mini:hover{border-color:var(--muted)}}
 .year{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (min-width:480px){.year{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -83,16 +77,26 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .mini h3 em{font-style:normal;font-family:var(--mono);font-weight:500;color:var(--mark)}
 .mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
 .mgrid i{aspect-ratio:1;border-radius:3px;font-style:normal;font-family:var(--mono);font-size:9px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-variant-numeric:tabular-nums}
-.mgrid i.on{background:var(--mark);color:var(--mark-fg)}
-.mgrid i.l2{background:linear-gradient(var(--ret),var(--ret)) center/50% 50% no-repeat,var(--mark)}
-.mgrid i.l3{background:linear-gradient(var(--gly),var(--gly)) center/33.4% 33.4% no-repeat,linear-gradient(var(--ret),var(--ret)) center/66.7% 66.7% no-repeat,var(--mark)}
+.mgrid i.on{background:var(--fill,var(--mark));color:var(--mark-fg)}
+.t-m{--fill:var(--mark)}.t-r{--fill:var(--ret)}.t-g{--fill:var(--gly)}
+.t-mr{--fill:linear-gradient(90deg,var(--mark) 50%,var(--ret) 50%)}
+.t-mg{--fill:linear-gradient(90deg,var(--mark) 50%,var(--gly) 50%)}
+.pick-bg{position:fixed;inset:0;z-index:20}
+.pick{position:fixed;z-index:21;width:224px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.16),0 2px 6px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.pick button{display:flex;align-items:center;gap:10px;border:0;background:transparent;border-radius:9px;padding:10px;font-size:14px;text-align:left;transition:background-color .15s ease,transform .3s var(--spring)}
+.pick button:active{background:var(--line);transform:scale(.97)}
+.pick .sq{width:18px;height:18px;border-radius:5px;background:var(--fill);flex:none}
+.pick .sq.none{background:none;border:1.5px dashed var(--muted)}
+.pick .ck{margin-left:auto;color:var(--muted);font-size:13px}
+.pick hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
 .mgrid i.today{outline:1px solid var(--fg);color:var(--fg)}
 .stats{display:flex;gap:24px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .stats b{display:inline-block;font-family:var(--mono);font-weight:500;color:var(--fg);font-size:15px;margin-right:4px}
 .status{font-size:12px;color:var(--muted);min-height:1em}
 .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;color:var(--muted);padding-top:4px}
 .legend span{display:inline-flex;align-items:center;gap:7px}
-.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block;background:var(--fill)}
+.legend p{flex-basis:100%;margin:2px 0 0;font-size:11px}
 .remind{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;transition:transform .45s var(--spring),border-color .2s ease}
 .remind:active{transform:scale(.98);transition-duration:.12s}
 .remind span{display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:500}
@@ -137,21 +141,30 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
   </button>
   <div class="status" id="status"></div>
   <div class="legend" aria-label="Leyenda">
-    <span><i style="background:var(--mark)"></i>Máscara LED · 1 toque</span>
-    <span><i style="background:var(--ret)"></i>Retinol · 2 toques</span>
-    <span><i style="background:var(--gly)"></i>Glicólico · 3 toques</span>
+    <span><i class="t-m"></i>Máscara</span>
+    <span><i class="t-mr"></i>Máscara + retinol</span>
+    <span><i class="t-mg"></i>Máscara + glicólico</span>
+    <span><i class="t-r"></i>Retinol</span>
+    <span><i class="t-g"></i>Glicólico</span>
+    <p>Toque: máscara · Mantén pulsado: elegir</p>
   </div>
 </div>
+<div class="pick-bg" id="pickBg" hidden></div>
+<div class="pick" id="pick" role="menu" hidden></div>
 
 <script>
 const MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const now=new Date();
 let y=now.getFullYear(),m=now.getMonth(),view="month",first=true;
 let marks=new Map();
-const toArr=()=>[...marks].map(([k,l])=>l>1?`${k}:${l}`:k);
-const fromArr=a=>new Map(a.filter(s=>typeof s==="string").map(s=>{const[k,l]=s.split(":");return[k,Math.min(3,Math.max(1,+l||1))]}));
+/* Tipo por día: m=máscara, mr=máscara+retinol, mg=máscara+glicólico, r=retinol, g=glicólico. Guardado "AAAA-MM-DD" (m) o "AAAA-MM-DD:tipo" */
+const TYPES=[["m","Máscara"],["mr","Máscara + retinol"],["mg","Máscara + glicólico"],["r","Retinol"],["g","Glicólico"]];
+const OLD={"2":"mr","3":"mg"};
+const toArr=()=>[...marks].map(([k,t])=>t==="m"?k:`${k}:${t}`);
+const fromArr=a=>new Map(a.filter(s=>typeof s==="string").map(s=>{let[k,t]=s.split(":");t=OLD[t]||t||"m";return[k,TYPES.some(x=>x[0]===t)?t:"m"]}));
+const hasMask=t=>!!t&&t[0]==="m";
 const storeLocal=()=>{try{localStorage.setItem(LS,JSON.stringify(toArr()))}catch(e){}};
-const lvlClass=l=>l?" on"+(l>1?" l"+l:""):"";
+const lvlClass=t=>t?" on t-"+t:"";
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const key=(Y,M,D)=>`${Y}-${pad(M+1)}-${pad(D)}`;
@@ -161,7 +174,7 @@ const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const EASE="cubic-bezier(.2,.8,.2,1)";
 try{const s=JSON.parse(localStorage.getItem(LS)||"[]");if(Array.isArray(s))marks=fromArr(s)}catch(e){}
 
-function countIn(prefix){let c=0;marks.forEach((l,k)=>{if(k.startsWith(prefix))c++});return c}
+function countIn(prefix){let c=0;marks.forEach((t,k)=>{if(hasMask(t)&&k.startsWith(prefix))c++});return c}
 const curVp=()=>view==="month"?$("mvp"):$("yearView");
 
 function buildMonth(){
@@ -172,10 +185,11 @@ function buildMonth(){
     const k=key(d.getFullYear(),d.getMonth(),d.getDate());
     const b=document.createElement("button");
     b.className="day"+(d.getMonth()!==m?" out":"")+(k===todayKey?" today":"")+lvlClass(marks.get(k));
-    b.innerHTML=`<i class="lv b"></i><i class="lv g"></i>${d.getDate()}`;
+    b.textContent=d.getDate();
     b.setAttribute("aria-pressed",marks.has(k));
     b.setAttribute("aria-label",`${d.getDate()} de ${MONTHS[d.getMonth()]}`);
-    b.onclick=()=>{toggle(k,b);b.blur()};
+    b.onclick=()=>{if(b._long){b._long=false;return}toggle(k,b);b.blur()};
+    holdable(b,k);
     if(first&&!reduce)b.animate([{opacity:0,transform:"translateY(6px) scale(.94)"},{opacity:1,transform:"none"}],{duration:420,delay:i*7,easing:EASE,fill:"backwards"});
     g.appendChild(b);
   }
@@ -305,14 +319,47 @@ function setView(v,fromRect){
   }
 }
 
-function toggle(k,b){
-  const l=((marks.get(k)||0)+1)%4;
-  l?marks.set(k,l):marks.delete(k);
+function toggle(k,b){setType(k,marks.has(k)?null:"m",b)}
+function setType(k,t,b){
+  const prev=marks.get(k);
+  if(prev===t)return;
+  t?marks.set(k,t):marks.delete(k);
   storeLocal();
-  if(b){b.classList.toggle("on",l>0);b.classList.toggle("l2",l===2);b.classList.toggle("l3",l===3);b.setAttribute("aria-pressed",l>0);counts(true);
-    try{navigator.vibrate&&navigator.vibrate(l?8+l*2:6)}catch(e){}}
-  else render();
+  if(b){
+    // Al quitar se conserva el color anterior mientras se desvanece
+    if(t){b.className=b.className.replace(/ t-\w+/g,"")+" t-"+t}
+    b.classList.toggle("on",!!t);b.setAttribute("aria-pressed",!!t);counts(true);
+    if(prev&&t&&!reduce)b.animate([{transform:"scale(.88)"},{transform:"none"}],{duration:500,easing:"cubic-bezier(.34,1.56,.64,1)"});
+    try{navigator.vibrate&&navigator.vibrate(t?10:6)}catch(e){}
+  }else render();
   save();
+}
+/* Mantener pulsado: menú para elegir tipo */
+function holdable(b,k){
+  let t=null,sx=0,sy=0;
+  const cancel=()=>{clearTimeout(t);t=null};
+  b.addEventListener("pointerdown",e=>{if(e.button)return;sx=e.clientX;sy=e.clientY;cancel();
+    t=setTimeout(()=>{t=null;b._long=true;try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}openPicker(k,b)},430)});
+  b.addEventListener("pointermove",e=>{if(t&&Math.hypot(e.clientX-sx,e.clientY-sy)>8)cancel()});
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,cancel));
+  b.addEventListener("contextmenu",e=>e.preventDefault());
+}
+function openPicker(k,b){
+  const pk=$("pick"),bg=$("pickBg"),cur=marks.get(k);
+  pk.innerHTML=TYPES.map(([t,n])=>`<button role="menuitem" data-t="${t}"><i class="sq t-${t}"></i>${n}${cur===t?'<span class="ck">✓</span>':""}</button>`).join("")
+    +(cur?`<hr><button role="menuitem" data-t=""><i class="sq none"></i>Quitar</button>`:"");
+  pk.hidden=bg.hidden=false;
+  const r=b.getBoundingClientRect(),w=pk.offsetWidth,h=pk.offsetHeight;
+  const left=Math.min(Math.max(12,r.left+r.width/2-w/2),innerWidth-w-12);
+  const above=r.top-h-10>12,top=above?r.top-h-8:Math.min(r.bottom+8,innerHeight-h-12);
+  pk.style.left=left+"px";pk.style.top=top+"px";
+  pk.style.transformOrigin=`${r.left+r.width/2-left}px ${above?h:0}px`;
+  if(!reduce)pk.animate([{opacity:0,transform:"scale(.85)"},{opacity:1,transform:"none"}],{duration:380,easing:"cubic-bezier(.34,1.4,.64,1)"});
+  const close=()=>{if(pk.hidden)return;bg.hidden=true;
+    if(reduce){pk.hidden=true;return}
+    pk.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.92)"}],{duration:160,easing:"ease-in"}).onfinish=()=>pk.hidden=true};
+  bg.onpointerdown=e=>{e.preventDefault();close()};
+  pk.onclick=e=>{const o=e.target.closest("button");if(!o)return;close();setType(k,o.dataset.t||null,b)};
 }
 /* Sincronización con la nube (Vercel Blob vía /api/marks). Local = caché; "dirty" = cambios aún sin subir */
 const DIRTY="mascara-luces-dirty";
@@ -388,7 +435,7 @@ async function initRemind(){
   };
 }
 if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("message",e=>{
-  if(e.data&&e.data.type==="marked"&&!marks.has(e.data.day)){marks.set(e.data.day,1);storeLocal();render()}
+  if(e.data&&e.data.type==="marked"){const t=marks.get(e.data.day),n=t==="r"?"mr":t==="g"?"mg":t||"m";if(n!==t){marks.set(e.data.day,n);storeLocal();render()}}
 });
 
 if(location.protocol.startsWith("http")){

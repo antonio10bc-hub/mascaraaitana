@@ -1,5 +1,5 @@
 import webpush from "web-push";
-import { json, readJSON, writeJSON, todayIn, getVapid } from "./_store.js";
+import { json, readJSON, writeJSON, todayIn, getVapid, hasMask } from "./_store.js";
 
 // Lo llama el cron diario de Vercel (ver vercel.json). Si hoy ya está marcado, no avisa.
 export async function GET(request) {
@@ -9,7 +9,7 @@ export async function GET(request) {
   const force = new URL(request.url).searchParams.has("force");
   const today = todayIn("Europe/Madrid");
   const marks = await readJSON("marks.json", { days: [] });
-  if (!force && (marks.days || []).some(d => d.split(":")[0] === today)) return json({ skipped: "ya marcado", today });
+  if (!force && (marks.days || []).some(d => d.split(":")[0] === today && hasMask(d))) return json({ skipped: "ya marcado", today });
 
   const v = await getVapid();
   webpush.setVapidDetails("mailto:noreply@mascaraaitana.vercel.app", v.publicKey, v.privateKey);

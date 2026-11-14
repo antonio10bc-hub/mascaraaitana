@@ -15,6 +15,8 @@ export function writeJSON(path, data) {
   });
 }
 export const isDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+// Entrada guardada: "AAAA-MM-DD" (máscara) o "AAAA-MM-DD:2" (+retinol) / ":3" (+glicólico)
+export const isEntry = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}(:[23])?$/.test(s);
 export const todayIn = tz => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 // Claves VAPID para push: se generan en el servidor la primera vez y se guardan en el blob privado

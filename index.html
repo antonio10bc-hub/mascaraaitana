@@ -23,16 +23,16 @@ body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
 /* Layout: columna centrada; saludo, cabecera fija en una línea, vista Mes (7×6) o Año (12 mini meses) */
 :root{
   --bg:#f6f7f9;--surface:#ffffff;--fg:#14171c;--muted:#6b7280;--line:#e3e6eb;
-  --mark:#d9705b;--mark-fg:#ffffff;--today:#14171c;
+  --mark:#d9705b;--ret:#5b84c4;--gly:#5aa679;--mark-fg:#ffffff;--today:#14171c;
   --sans:"Geist",ui-sans-serif,system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
   --ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1115;--surface:#171a20;--fg:#e8eaee;--muted:#8a919c;--line:#262a32;
-  --mark:#e27e69;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}}
+  --mark:#e27e69;--ret:#6f96d4;--gly:#6bb88a;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1115;--surface:#171a20;--fg:#e8eaee;--muted:#8a919c;--line:#262a32;
-  --mark:#e27e69;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}
+  --mark:#e27e69;--ret:#6f96d4;--gly:#6bb88a;--mark-fg:#ffffff;--today:#e8eaee;color-scheme:dark}
 html,body{background:var(--bg);color:var(--fg);overscroll-behavior:none;-webkit-text-size-adjust:100%}
 body{font-family:var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
@@ -66,6 +66,12 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .day.on::before{opacity:1;transform:scale(1);transition:transform .5s var(--spring),opacity .18s ease}
 .day:active{transform:scale(.9);transition-duration:.12s}
 .day.on.today::after{background:var(--mark-fg)}
+.day .lv{position:absolute;inset:50%;border-radius:5px;z-index:-1;opacity:0;transition:inset .5s var(--spring),opacity .2s ease}
+.day .lv.b{background:var(--ret)}
+.day .lv.g{background:var(--gly);border-radius:3px}
+.day.l2 .lv.b{inset:25%;opacity:1}
+.day.l3 .lv.b{inset:16.67%;opacity:1}
+.day.l3 .lv.g{inset:33.33%;opacity:1}
 @media (hover:hover){.btn:hover{border-color:var(--muted)}.day:not(.on):hover{background:var(--line)}.mini:hover{border-color:var(--muted)}}
 .year{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (min-width:480px){.year{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -78,10 +84,15 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 .mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
 .mgrid i{aspect-ratio:1;border-radius:3px;font-style:normal;font-family:var(--mono);font-size:9px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-variant-numeric:tabular-nums}
 .mgrid i.on{background:var(--mark);color:var(--mark-fg)}
+.mgrid i.l2{background:linear-gradient(var(--ret),var(--ret)) center/50% 50% no-repeat,var(--mark)}
+.mgrid i.l3{background:linear-gradient(var(--gly),var(--gly)) center/33.4% 33.4% no-repeat,linear-gradient(var(--ret),var(--ret)) center/66.7% 66.7% no-repeat,var(--mark)}
 .mgrid i.today{outline:1px solid var(--fg);color:var(--fg)}
 .stats{display:flex;gap:24px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .stats b{display:inline-block;font-family:var(--mono);font-weight:500;color:var(--fg);font-size:15px;margin-right:4px}
 .status{font-size:12px;color:var(--muted);min-height:1em}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;color:var(--muted);padding-top:4px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
 .remind{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;transition:transform .45s var(--spring),border-color .2s ease}
 .remind:active{transform:scale(.98);transition-duration:.12s}
 .remind span{display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:500}
@@ -125,13 +136,22 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
     <i class="sw" aria-hidden="true"></i>
   </button>
   <div class="status" id="status"></div>
+  <div class="legend" aria-label="Leyenda">
+    <span><i style="background:var(--mark)"></i>Máscara LED · 1 toque</span>
+    <span><i style="background:var(--ret)"></i>Retinol · 2 toques</span>
+    <span><i style="background:var(--gly)"></i>Glicólico · 3 toques</span>
+  </div>
 </div>
 
 <script>
 const MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const now=new Date();
 let y=now.getFullYear(),m=now.getMonth(),view="month",first=true;
-let marks=new Set();
+let marks=new Map();
+const toArr=()=>[...marks].map(([k,l])=>l>1?`${k}:${l}`:k);
+const fromArr=a=>new Map(a.filter(s=>typeof s==="string").map(s=>{const[k,l]=s.split(":");return[k,Math.min(3,Math.max(1,+l||1))]}));
+const storeLocal=()=>{try{localStorage.setItem(LS,JSON.stringify(toArr()))}catch(e){}};
+const lvlClass=l=>l?" on"+(l>1?" l"+l:""):"";
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const key=(Y,M,D)=>`${Y}-${pad(M+1)}-${pad(D)}`;
@@ -139,9 +159,9 @@ const todayKey=key(now.getFullYear(),now.getMonth(),now.getDate());
 const LS="mascara-luces-marks";
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const EASE="cubic-bezier(.2,.8,.2,1)";
-try{const s=JSON.parse(localStorage.getItem(LS)||"[]");if(Array.isArray(s))marks=new Set(s)}catch(e){}
+try{const s=JSON.parse(localStorage.getItem(LS)||"[]");if(Array.isArray(s))marks=fromArr(s)}catch(e){}
 
-function countIn(prefix){let c=0;marks.forEach(k=>{if(k.startsWith(prefix))c++});return c}
+function countIn(prefix){let c=0;marks.forEach((l,k)=>{if(k.startsWith(prefix))c++});return c}
 const curVp=()=>view==="month"?$("mvp"):$("yearView");
 
 function buildMonth(){
@@ -151,8 +171,8 @@ function buildMonth(){
     const d=new Date(y,m,1-first0+i);
     const k=key(d.getFullYear(),d.getMonth(),d.getDate());
     const b=document.createElement("button");
-    b.className="day"+(d.getMonth()!==m?" out":"")+(k===todayKey?" today":"")+(marks.has(k)?" on":"");
-    b.textContent=d.getDate();
+    b.className="day"+(d.getMonth()!==m?" out":"")+(k===todayKey?" today":"")+lvlClass(marks.get(k));
+    b.innerHTML=`<i class="lv b"></i><i class="lv g"></i>${d.getDate()}`;
     b.setAttribute("aria-pressed",marks.has(k));
     b.setAttribute("aria-label",`${d.getDate()} de ${MONTHS[d.getMonth()]}`);
     b.onclick=()=>{toggle(k,b);b.blur()};
@@ -170,7 +190,7 @@ function buildYear(){
     let cells="";
     const f=(new Date(y,mm,1).getDay()+6)%7, dim=new Date(y,mm+1,0).getDate();
     for(let i=0;i<f;i++)cells+="<i></i>";
-    for(let d=1;d<=dim;d++){const k=key(y,mm,d);cells+=`<i class="${marks.has(k)?"on":""}${k===todayKey?" today":""}">${d}</i>`}
+    for(let d=1;d<=dim;d++){const k=key(y,mm,d);cells+=`<i class="${lvlClass(marks.get(k))}${k===todayKey?" today":""}">${d}</i>`}
     card.innerHTML=`<h3>${MONTHS[mm]}<em>${c||""}</em></h3><div class="mgrid">${cells}</div>`;
     card.setAttribute("aria-label",`Abrir ${MONTHS[mm]}`);
     card.onclick=()=>{const r=card.getBoundingClientRect();m=mm;setView("month",r)};
@@ -286,10 +306,11 @@ function setView(v,fromRect){
 }
 
 function toggle(k,b){
-  marks.has(k)?marks.delete(k):marks.add(k);
-  try{localStorage.setItem(LS,JSON.stringify([...marks]))}catch(e){}
-  if(b){const on=marks.has(k);b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);counts(true);
-    try{navigator.vibrate&&navigator.vibrate(on?10:6)}catch(e){}}
+  const l=((marks.get(k)||0)+1)%4;
+  l?marks.set(k,l):marks.delete(k);
+  storeLocal();
+  if(b){b.classList.toggle("on",l>0);b.classList.toggle("l2",l===2);b.classList.toggle("l3",l===3);b.setAttribute("aria-pressed",l>0);counts(true);
+    try{navigator.vibrate&&navigator.vibrate(l?8+l*2:6)}catch(e){}}
   else render();
   save();
 }
@@ -303,7 +324,7 @@ async function push(){
   if(writing){again=true;return}
   writing=true;
   try{
-    const r=await fetch("/api/marks",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({days:[...marks]})});
+    const r=await fetch("/api/marks",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({days:toArr()})});
     if(!r.ok)throw 0;
     if(!again)setDirty(false);
     $("status").textContent="";
@@ -319,8 +340,8 @@ async function pull(){
     const d=(await r.json()).days;
     if(isDirty()||writing)return;
     if(Array.isArray(d)){
-      const same=d.length===marks.size&&d.every(k=>marks.has(k));
-      if(!same){marks=new Set(d);try{localStorage.setItem(LS,JSON.stringify(d))}catch(e){}render()}
+      const nm=fromArr(d),same=nm.size===marks.size&&[...nm].every(([k,l])=>marks.get(k)===l);
+      if(!same){marks=nm;storeLocal();render()}
     }else if(marks.size)push();
   }catch(e){}
 }
@@ -367,7 +388,7 @@ async function initRemind(){
   };
 }
 if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("message",e=>{
-  if(e.data&&e.data.type==="marked"&&!marks.has(e.data.day)){marks.add(e.data.day);try{localStorage.setItem(LS,JSON.stringify([...marks]))}catch(_){}render()}
+  if(e.data&&e.data.type==="marked"&&!marks.has(e.data.day)){marks.set(e.data.day,1);storeLocal();render()}
 });
 
 if(location.protocol.startsWith("http")){

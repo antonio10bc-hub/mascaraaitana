@@ -9,7 +9,7 @@ export async function GET(request) {
   const force = new URL(request.url).searchParams.has("force");
   const today = todayIn("Europe/Madrid");
   const marks = await readJSON("marks.json", { days: [] });
-  if (!force && (marks.days || []).includes(today)) return json({ skipped: "ya marcado", today });
+  if (!force && (marks.days || []).some(d => d.split(":")[0] === today)) return json({ skipped: "ya marcado", today });
 
   const v = await getVapid();
   webpush.setVapidDetails("mailto:noreply@mascaraaitana.vercel.app", v.publicKey, v.privateKey);

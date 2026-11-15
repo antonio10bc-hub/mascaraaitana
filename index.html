@@ -37,7 +37,17 @@ html,body{background:var(--bg);color:var(--fg);overscroll-behavior:none;-webkit-
 body{font-family:var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
-.hello{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0}
+.hello{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.avatar{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);padding:0;overflow:hidden;background:var(--surface);font-size:14px;font-weight:600;color:var(--muted);transition:transform .4s var(--spring)}
+.avatar:active{transform:scale(.9);transition-duration:.1s}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.login{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+.login img{width:76px;height:76px;border-radius:18px}
+.login h2{margin:6px 0 0;font-size:22px;font-weight:600;letter-spacing:-.01em}
+.login p{margin:0;color:var(--muted);font-size:14px;max-width:280px}
+.login #gbtn{min-height:44px;margin-top:10px}
+.login .err{color:var(--mark);font-size:13px;min-height:1em}
 .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500;white-space:nowrap}
 header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px}
 h1{margin:4px 0 0;font-size:clamp(20px,6vw,28px);font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -110,7 +120,10 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
 </head>
 <body>
 <div class="wrap">
-  <p class="hello">Hola Aitana :)</p>
+  <div class="top">
+    <p class="hello" id="hello">Hola Aitana :)</p>
+    <button class="avatar" id="avatar" aria-label="Cuenta" hidden></button>
+  </div>
   <div class="seg" role="group" aria-label="Vista">
     <span class="ind" id="ind" aria-hidden="true"></span>
     <button id="vMonth" aria-pressed="true">Mes</button>
@@ -149,6 +162,13 @@ button:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
     <p>Toque: máscara · Mantén pulsado: elegir</p>
   </div>
 </div>
+<div class="login" id="login" hidden>
+  <img src="/icon.svg" alt="">
+  <h2>Calendario Máscara</h2>
+  <p>Inicia sesión para guardar tus días y verlos en todos tus dispositivos.</p>
+  <div id="gbtn"></div>
+  <div class="err" id="loginErr"></div>
+</div>
 <div class="pick-bg" id="pickBg" hidden></div>
 <div class="pick" id="pick" role="menu" hidden></div>
 
@@ -169,7 +189,7 @@ const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const key=(Y,M,D)=>`${Y}-${pad(M+1)}-${pad(D)}`;
 const todayKey=key(now.getFullYear(),now.getMonth(),now.getDate());
-const LS="mascara-luces-marks";
+let LS="mascara-luces-marks";const LEGACY_LS=LS,USER_LS="mascara-luces-user";let user=null;
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const EASE="cubic-bezier(.2,.8,.2,1)";
 try{const s=JSON.parse(localStorage.getItem(LS)||"[]");if(Array.isArray(s))marks=fromArr(s)}catch(e){}
@@ -362,7 +382,7 @@ function openPicker(k,b){
   pk.onclick=e=>{const o=e.target.closest("button");if(!o)return;close();setType(k,o.dataset.t||null,b)};
 }
 /* Sincronización con la nube (Vercel Blob vía /api/marks). Local = caché; "dirty" = cambios aún sin subir */
-const DIRTY="mascara-luces-dirty";
+let DIRTY="mascara-luces-dirty";
 let saveT=null,writing=false,again=false;
 const isDirty=()=>{try{return localStorage.getItem(DIRTY)==="1"}catch(e){return false}};
 const setDirty=v=>{try{v?localStorage.setItem(DIRTY,"1"):localStorage.removeItem(DIRTY)}catch(e){}};
@@ -372,6 +392,7 @@ async function push(){
   writing=true;
   try{
     const r=await fetch("/api/marks",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({days:toArr()})});
+    if(r.status===401){writing=false;return showLogin()}
     if(!r.ok)throw 0;
     if(!again)setDirty(false);
     $("status").textContent="";
@@ -383,7 +404,7 @@ async function pull(){
   if(isDirty())return push();
   if(writing)return;
   try{
-    const r=await fetch("/api/marks",{cache:"no-store"});if(!r.ok)return;
+    const r=await fetch("/api/marks",{cache:"no-store"});if(r.status===401)return showLogin();if(!r.ok)return;
     const d=(await r.json()).days;
     if(isDirty()||writing)return;
     if(Array.isArray(d)){
@@ -438,11 +459,74 @@ if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("messag
   if(e.data&&e.data.type==="marked"){const t=marks.get(e.data.day),n=t==="r"?"mr":t==="g"?"mg":t||"m";if(n!==t){marks.set(e.data.day,n);storeLocal();render()}}
 });
 
-if(location.protocol.startsWith("http")){
+/* Cuentas: login con Google (si está configurado). Cada usuario tiene sus datos en la nube y su caché local */
+function useUser(u){
+  user=u;
+  try{localStorage.setItem(USER_LS,JSON.stringify(u))}catch(e){}
+  LS=`${LEGACY_LS}:${u.sub}`;DIRTY=`mascara-luces-dirty:${u.sub}`;
+  marks=new Map();
+  try{
+    let s=localStorage.getItem(LS);
+    // Primera vez en este dispositivo: los días guardados antes del login pasan a esta cuenta (si la nube está vacía)
+    if(s===null&&localStorage.getItem(LEGACY_LS)){s=localStorage.getItem(LEGACY_LS);localStorage.removeItem(LEGACY_LS);localStorage.removeItem("mascara-luces-dirty");localStorage.setItem(LS,s)}
+    const a=JSON.parse(s||"[]");if(Array.isArray(a))marks=fromArr(a);
+  }catch(e){}
+  $("hello").textContent=`Hola ${u.name||""} :)`.replace("Hola  :)","Hola :)");
+  const av=$("avatar");av.hidden=false;
+  av.innerHTML=u.picture?`<img src="${u.picture}" alt="" referrerpolicy="no-referrer">`:(u.name||u.email||"?")[0].toUpperCase();
+  render();
+}
+function showLogin(clientId){
+  const l=$("login");
+  if(!l.hidden)return;
+  l.hidden=false;
+  if(new URLSearchParams(location.search).get("login")==="error")$("loginErr").textContent="No se pudo iniciar sesión. Inténtalo de nuevo.";
+  history.replaceState(null,"",location.pathname);
+  const go=id=>{
+    const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;
+    s.onload=()=>{google.accounts.id.initialize({client_id:id,ux_mode:"redirect",login_uri:location.origin+"/api/login"});
+      google.accounts.id.renderButton($("gbtn"),{theme:matchMedia("(prefers-color-scheme: dark)").matches?"filled_black":"outline",size:"large",shape:"pill",text:"continue_with",locale:"es",width:260})};
+    s.onerror=()=>$("loginErr").textContent="Sin conexión. Conéctate para iniciar sesión.";
+    document.head.appendChild(s);
+  };
+  if(clientId)go(clientId);else fetch("/api/me").then(r=>r.json()).then(m=>m.clientId&&go(m.clientId)).catch(()=>{});
+}
+async function logout(){
+  try{
+    const reg=await navigator.serviceWorker?.getRegistration();const sub=await reg?.pushManager?.getSubscription();
+    if(sub){await fetch("/api/subscribe",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:sub.endpoint})});await sub.unsubscribe()}
+  }catch(e){}
+  await fetch("/api/logout",{method:"POST"}).catch(()=>{});
+  try{localStorage.removeItem(USER_LS);localStorage.removeItem(LS);localStorage.removeItem(DIRTY)}catch(e){}
+  location.replace("/");
+}
+$("avatar").onclick=()=>{
+  const pk=$("pick"),bg=$("pickBg"),a=$("avatar").getBoundingClientRect();
+  pk.innerHTML=`<button disabled style="opacity:1;cursor:default;font-size:13px;color:var(--muted)">${user?.email||""}</button><hr><button data-x="out">Cerrar sesión</button>`;
+  pk.hidden=bg.hidden=false;
+  pk.style.left=Math.max(12,a.right-pk.offsetWidth)+"px";pk.style.top=(a.bottom+8)+"px";pk.style.transformOrigin="100% 0";
+  if(!reduce)pk.animate([{opacity:0,transform:"scale(.85)"},{opacity:1,transform:"none"}],{duration:380,easing:"cubic-bezier(.34,1.4,.64,1)"});
+  const close=()=>{bg.hidden=pk.hidden=true};
+  bg.onpointerdown=e=>{e.preventDefault();close()};
+  pk.onclick=e=>{if(e.target.closest("[data-x=out]")){close();logout()}};
+};
+let started=false;
+function start(){
+  if(started)return;started=true;
   initRemind();
   pull();
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull()});
   addEventListener("online",pull);
+}
+if(location.protocol.startsWith("http")){
+  // Arranque rápido con el usuario de la última vez; luego se confirma con el servidor
+  try{const cu=JSON.parse(localStorage.getItem(USER_LS)||"null");if(cu&&cu.sub)useUser(cu)}catch(e){}
+  fetch("/api/me",{cache:"no-store"}).then(r=>r.json()).then(me=>{
+    if(!me.auth){start();return}
+    if(!me.user){showLogin(me.clientId);return}
+    if(!user||user.sub!==me.user.sub)useUser(me.user);else{user=me.user;try{localStorage.setItem(USER_LS,JSON.stringify(me.user))}catch(e){}}
+    start();
+  }).catch(()=>{if(user||!localStorage.getItem(USER_LS))start()}); // sin conexión: seguir con lo local
 }
 </script>
 </body>
